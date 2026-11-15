@@ -1,9 +1,9 @@
 # agent-telemetry
 
-Every Claude Code session keeps a small JSON file describing itself: model, effort, context use,
-usage limits, cost, and whether a turn is running. Any tool can read these files: a terminal
+Every Claude Code and Codex session keeps a small JSON file describing itself: model, effort,
+context use, usage limits, cost, and whether a turn is running. Any tool can read these files: a terminal
 dashboard, a status bar, a window manager's sidebar, a script. Nothing leaves the machine; the
-plugin only writes local files.
+plugins only write local files.
 
 The file format is in [FORMAT.md](FORMAT.md).
 
@@ -26,10 +26,29 @@ claude plugin install agent-telemetry@agent-telemetry
 It needs a Claude Code with function-hook plugins (2.1.325 or newer). It does not use or change
 your status line, settings or hooks.
 
+## Install for Codex
+
+```
+codex plugin marketplace add evgenyt1/agent-telemetry
+codex plugin add agent-telemetry@agent-telemetry
+```
+
+Codex runs a plugin's hooks only after you approve them: open Codex, run `/hooks`, review the
+agent-telemetry hooks and turn them on. Until then nothing is written. The hooks need only `sh`,
+`sed` and `awk`.
+
+A Codex file has the same fields, without `cost` (Codex keeps no cost ledger). Its figures come
+from the session's own log (`~/.codex/sessions/…/rollout-*.jsonl`): the last token count gives
+`context` (the last request's input tokens over the model's window) and `limits`, the last turn
+context the `effort` (else `model_reasoning_effort` from `config.toml`). The hooks run on
+`SessionStart`, `UserPromptSubmit`, `PostToolUse`, `Stop` and `PostCompact`, and remove the file
+on `SessionEnd`.
+
 ## What you get
 
 ```
 ~/.cache/agent-telemetry/claude-<session>.json
+~/.cache/agent-telemetry/codex-<session>.json
 ```
 
 ```json
@@ -66,6 +85,10 @@ done
 
 ## How it works
 
+The repository is a plugin marketplace for both agents: `.claude-plugin/marketplace.json` lists
+the Claude Code plugin in `claude/`, `.agents/plugins/marketplace.json` the Codex plugin in
+`codex/`.
+
 The Claude Code plugin is a function-hooks module (`claude/hooks/register.ts`). Each write reads
 the session's figures from the engine (`$.session.usage()`: the same context, limits and cost the
 status line gets). It writes on `session.start`, `turn.start`, `turn.complete`, `session.measure`
@@ -73,11 +96,15 @@ and, in a long turn, after a model response at most every five seconds (`turn.st
 names the model and effort); it removes the file on `session.end`. Writes run one after another, each to a temporary file renamed over the
 old one.
 
+The Codex plugin is one POSIX shell script (`codex/hooks/agent-telemetry.sh`) that its hooks call
+with the event's name; see "Install for Codex" above.
+
 ## Develop
 
 ```sh
 claude plugin validate claude     # manifest and hooks module
 claude plugin test claude         # tests in claude/test
+node --test codex/test            # the Codex hook script (TEST_SH=dash to try another shell)
 claude --plugin-dir ./claude      # a session with the working copy loaded
 tsc -p claude                     # type-check, once a session has loaded the plugin
 ```

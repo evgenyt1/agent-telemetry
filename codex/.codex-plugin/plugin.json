@@ -1,0 +1,17 @@
+{
+  "name": "agent-telemetry",
+  "version": "0.1.0",
+  "description": "Keeps a JSON file per Codex session: model, effort, context use, usage limits, state.",
+  "author": { "name": "evgenyt1", "url": "https://github.com/evgenyt1" },
+  "homepage": "https://github.com/evgenyt1/agent-telemetry",
+  "repository": "https://github.com/evgenyt1/agent-telemetry",
+  "license": "MIT",
+  "keywords": ["telemetry", "context", "usage", "status"],
+  "hooks": "./hooks/hooks.json",
+  "interface": {
+    "displayName": "Agent telemetry",
+    "shortDescription": "A JSON file per session for dashboards and status bars",
+    "developerName": "evgenyt1",
+    "category": "Productivity"
+  }
+}
