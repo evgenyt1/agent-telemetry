@@ -1,0 +1,11 @@
+{
+  "name": "agent-telemetry",
+  "owner": { "name": "evgenyt1" },
+  "plugins": [
+    {
+      "name": "agent-telemetry",
+      "source": "./claude",
+      "description": "Keeps a JSON file per Claude Code session: model, effort, context use, usage limits, cost, state."
+    }
+  ]
+}

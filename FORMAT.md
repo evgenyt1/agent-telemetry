@@ -57,13 +57,13 @@ One file per session: `<agent>-<session>.json`, for example `claude-0b7c…e1.js
 | `agent` | string | `claude` or `codex`; other writers pick their own lowercase name. |
 | `agentVersion` | string? | The agent program's version, when the writer can read it. |
 | `session` | string | The agent's own session id (what its resume takes). |
-| `pid` | number | The agent's process id. A reader matches a file to a process by it. |
+| `pid` | number? | The agent's process id; absent while the writer cannot find it. A reader matches a file to a process by it, and treats a file without one as live until `updatedAt` is old. |
 | `cwd` | string | The session's working folder, absolute. |
 | `terminal` | object? | Ids of the terminal the agent runs in, keyed by kind, from the environment: `hc` (`HC_TERMINAL_ID`), `tmux` (`TMUX_PANE`), `wezterm` (`WEZTERM_PANE`), `kitty` (`KITTY_WINDOW_ID`), `zellij` (`ZELLIJ_PANE_ID`), `iterm` (`ITERM_SESSION_ID`). Only the ones set. |
-| `model` | string? | The model of the main conversation's last request. |
+| `model` | string? | The model of the main conversation's last request; before the first request, the session's model as the agent names it (it may be an alias, such as `opus`). |
 | `effort` | string \| number? | Its reasoning effort (`low` … `max`, or a number), when the model takes one. |
 | `state` | string? | `working` while a turn runs, `idle` after it ends. |
-| `context` | object? | `used`: input tokens of the last request (uncached, cache-written and cache-read together); `window`: the model's context window in tokens; `percent`: `used` over `window`, a whole number 0–100. `used` and `percent` are absent before the first response. |
+| `context` | object? | `used`: input tokens of the last request (uncached, cache-written and cache-read together); `window`: the model's context window in tokens; `percent`: `used` over `window`, a whole number 0–100 (100 when `used` is past the window). `used` and `percent` are absent before the first response. |
 | `limits` | array? | Usage-limit windows the last response reported: `kind` (`five_hour`, `seven_day`, `spend_limit`, or `<n>m` for another window length in minutes), `percent` used (0–100, past 100 on an exceeded spend limit), `resetsAt` (ISO 8601). Empty or absent when there is no reading. |
 | `cost` | object? | `usd`: what the session has cost so far, where the agent keeps a ledger. |
 | `startedAt` | string | When the session started, ISO 8601 UTC. |
