@@ -80,13 +80,30 @@ fi
 name=codex-$(unescape "$session" | sed 's/[^A-Za-z0-9._-]/_/g').json
 file=$dir/$name
 
-if [ "$event" = end ]; then
-  rm -f "$file"
-  exit 0
-fi
+record_pid() {
+  sed -n 's/^  "pid": \([0-9][0-9]*\),$/\1/p'
+}
 
 previous=
 [ -f "$file" ] && previous=$(cat "$file")
+owner=$(printf '%s\n' "$previous" | record_pid)
+pid=$(codex_pid)
+
+if [ "$event" = end ]; then
+  if [ -z "$owner" ] || [ "$pid" = "$owner" ]; then
+    rm -f "$file"
+  fi
+  exit 0
+fi
+
+# A start can take over a resumed session. Late hooks from the previous process must
+# leave the new owner's record alone while that owner is still running.
+if [ -n "$owner" ] && kill -0 "$owner" 2>/dev/null; then
+  if [ "$event" != start ] && [ -n "$pid" ] && [ "$owner" != "$pid" ]; then
+    exit 0
+  fi
+  [ -n "$pid" ] || pid=$owner
+fi
 
 case $event in
   start | stop) state=idle ;;
@@ -163,14 +180,6 @@ if [ -z "$effort" ]; then
 fi
 [ -n "$started" ] || started=$(str startedAt "$previous")
 [ -n "$started" ] || started=$(iso_now)
-
-# The pid this session's file already names, while that process lives; else a walk up the tree.
-pid=
-if [ -n "$previous" ]; then
-  pid=$(printf '%s\n' "$previous" | sed -n 's/^  "pid": \([0-9][0-9]*\),$/\1/p')
-  [ -n "$pid" ] && ! kill -0 "$pid" 2>/dev/null && pid=
-fi
-[ -n "$pid" ] || pid=$(codex_pid)
 
 terminal=
 add_terminal() {

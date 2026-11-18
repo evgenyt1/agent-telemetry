@@ -200,6 +200,8 @@ async function end($: Engine, st: State, session: string, reason: string): Promi
     if (now !== session) {
       st.ended.delete(now)
       st.state = 'idle'
+      st.model = undefined
+      st.effort = undefined
       await save($, st)
     }
   }

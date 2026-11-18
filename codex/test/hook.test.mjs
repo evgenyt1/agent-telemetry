@@ -109,6 +109,23 @@ test('end removes the file', () => {
   assert.ok(!existsSync(w.file))
 })
 
+test('a resumed session replaces another live owner', () => {
+  const w = setup()
+  const fakeBin = join(w.root, 'bin')
+  mkdirSync(fakeBin)
+  writeFileSync(join(fakeBin, 'ps'), '#!/bin/sh\nprintf "codex\\n"\n', { mode: 0o755 })
+  const env = { PATH: `${fakeBin}:${process.env.PATH}` }
+  run(w, 'start', {}, env)
+  const initial = read(w)
+  assert.equal(initial.pid, process.pid)
+
+  writeFileSync(w.file, JSON.stringify({ ...initial, pid: process.ppid }, null, 2))
+  run(w, 'end', {}, env)
+  assert.equal(read(w).pid, process.ppid)
+  run(w, 'start', {}, env)
+  assert.equal(read(w).pid, process.pid)
+})
+
 test('the same figures do not rewrite the file', () => {
   const w = setup()
   run(w, 'stop')
